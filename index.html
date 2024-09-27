@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Anime Character</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+
+    <style>
+        body { 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body>
+    
+
+    <script>
+        let model;
+
+        const scene = new THREE.Scene();
+
+        /**
+         * Field of View (FOV): 75
+         * เป็นขอบเขตการมองเห็นในแนวตั้ง (เป็นองศา) 
+         * ซึ่งจะกำหนดว่ามุมมองของกล้องกว้างแค่ไหน ค่าที่มากขึ้นหมายถึงมุมมองที่กว้างขึ้น
+         * 
+         * Aspect Ratio (อัตราส่วนภาพ)
+         * ค่านี้จะกำหนดอัตราส่วนระหว่างความกว้างและความสูงของมุมมองของกล้อง 
+         * โดยปกติแล้วจะตั้งค่าให้ตรงกับอัตราส่วนภาพของจอแสดงผลหรือ canvas
+         * 
+         * Near Clipping Plane (ระนาบตัดภาพใกล้)
+         * คือระยะห่างขั้นต่ำจากกล้องที่สามารถเรนเดอร์วัตถุได้ 
+         * หากวัตถุใดอยู่ใกล้กว่าระยะนี้จะไม่สามารถมองเห็นได้
+         * 
+         * Far Clipping Plane (ระนาบตัดภาพไกล)
+         * นี่คือระยะห่างสูงสุดจากกล้องที่สามารถแสดงวัตถุได้ 
+         * หากระยะห่างเกินกว่านี้จะไม่สามารถมองเห็นได้
+         * 
+         */
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        /**
+         * 
+         * THREE.WebGLRenderer(): 
+         * คำสั่งนี้จะสร้างโปรแกรมเรนเดอร์ที่จะใช้ในการเรนเดอร์ฉาก 3 มิติลงบนองค์ HTML <canvas> 
+         * โดยใช้ WebGL ซึ่งเป็น JavaScript API สำหรับการเรนเดอร์กราฟิก 3 มิติ
+         * 
+         * { antialias: true }: นี่คือตัวเลือกที่ส่งเป็นอ็อบเจกต์ไปยังคอนสตรัคเตอร์ของตัวเรนเดอร์ 
+         * ซึ่งจะเปิดใช้งาน antialiasing ซึ่งเป็นเทคนิคที่ใช้ในการปรับขอบหยักให้เรียบ 
+         * เมื่อตั้งค่า antialias เป็น true การเรนเดอร์จะดูเรียบเนียนขึ้น โดยเฉพาะที่ขอบของอ็อบเจกต์
+         * 
+         */
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0xffffff); // White background
+        document.body.appendChild(renderer.domElement);
+
+        // OrbitControls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        // Lighting
+        const light = new THREE.AmbientLight(0xffffff, 0.5);
+        // const light = new THREE.AmbientLight(0xffffff, 20);
+        scene.add(light);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+        directionalLight.position.set(5, 10, 7.5)
+        scene.add(directionalLight)
+
+        const hdriLoader = new THREE.RGBELoader()
+        hdriLoader.load('hdri/lonely_road_afternoon_puresky_1k.hdr', function (texture) {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            scene.background = texture;
+            scene.environment = texture;
+        });
+
+        // Load the 3D model
+        const loader = new THREE.GLTFLoader();
+        loader.load('models/scene.gltf', function (gltf) {
+            model = gltf.scene;
+            model.scale.set(150, 150, 150);
+            
+            scene.add(model);
+            renderer.render(scene, camera);
+
+        }, undefined, function (error) {
+            console.error(error);
+        });
+
+        camera.position.set(0, 1, 5);
+
+        function animate(){
+            requestAnimationFrame(animate);
+
+            controls.update();
+
+            if(model){
+                model.rotation.y += 0.001;
+                // camera.lookAt(model.position);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener("resize", () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        })
+    </script>
+</body>
+</html>
